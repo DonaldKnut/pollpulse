@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./dist",
+    "emitDeclarationOnly": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["src/**/*.stories.tsx", "src/**/*.test.tsx"]
+}
