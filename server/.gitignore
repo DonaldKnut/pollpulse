@@ -1,2 +1,42 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
 
+# Environment variables
 .env
+.env.local
+.env.development
+.env.production
+
+# Build artifacts
+dist/
+build/
+coverage/
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Editor and OS files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database files (if applicable)
+*.sqlite
+*.db
+*.sql
+
+# Other
+package-lock.json  # Optional, include if using Yarn or pnpm
+yarn.lock          # Optional, include if using npm
