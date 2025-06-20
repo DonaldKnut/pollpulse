@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   User,
@@ -5,6 +6,8 @@ import {
   ClipboardList,
   ArrowRightCircle,
   LogOut,
+  Info,
+  PlusCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -15,18 +18,41 @@ interface Room {
   createdAt: string;
 }
 
-interface UserProfilePageProps {
-  rooms: Room[];
-}
-
-const UserProfilePage: React.FC<UserProfilePageProps> = ({ rooms }) => {
+const UserProfilePage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const res = await fetch(`/api/rooms?userId=${user?.id}`);
+        const data = await res.json();
+        setRooms(data.rooms);
+      } catch (err) {
+        console.error("Failed to fetch rooms", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      fetchRooms();
+    }
+  }, [user]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
+
+  const handleCreateRoom = () => {
+    navigate("/create-room");
+  };
+
+  if (!user) return <div>Loading user...</div>;
+  if (loading) return <div>Loading your rooms...</div>;
 
   return (
     <motion.div
@@ -51,18 +77,14 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ rooms }) => {
         animate="visible"
         variants={{
           hidden: {},
-          visible: {
-            transition: {
-              staggerChildren: 0.15,
-            },
-          },
+          visible: { transition: { staggerChildren: 0.15 } },
         }}
       >
         <motion.p className="flex items-center gap-2 text-purple-700">
-          <User className="w-5 h-5" /> {user?.username}
+          <User className="w-5 h-5" /> {user.username}
         </motion.p>
         <motion.p className="flex items-center gap-2 text-purple-700">
-          <Mail className="w-5 h-5" /> {user?.email}
+          <Mail className="w-5 h-5" /> {user.email}
         </motion.p>
       </motion.div>
 
@@ -72,10 +94,19 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ rooms }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        <h2 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2 text-sm text-purple-700">
+          <Info className="w-4 h-4" />
+          <p>
+            Rooms are where you create polls for others to vote anonymously.
+            Each room has options, a deadline, and live results.
+          </p>
+        </div>
+
+        <h2 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2 mt-4">
           <ClipboardList className="w-5 h-5" />
           Your Created Rooms
         </h2>
+
         {rooms.length > 0 ? (
           <ul className="space-y-2">
             {rooms.map((room) => (
@@ -99,7 +130,18 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ rooms }) => {
             ))}
           </ul>
         ) : (
-          <p className="text-purple-600">You haven’t created any rooms yet.</p>
+          <div className="text-left text-purple-600 space-y-4">
+            <p>You haven’t created any rooms yet.</p>
+            <motion.button
+              onClick={handleCreateRoom}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="mt-2 inline-flex items-center gap-2 px-5 py-2 bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 transition"
+            >
+              <PlusCircle className="w-5 h-5" />
+              Create Your First Room
+            </motion.button>
+          </div>
         )}
       </motion.div>
 
