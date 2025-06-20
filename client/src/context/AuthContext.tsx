@@ -1,37 +1,38 @@
-// src/context/AuthContext.tsx
-import { createContext, useContext, useState, useEffect } from "react";
-import type { ReactNode } from "react"; // Import as type-only
+import { createContext, useContext, useState, type ReactNode } from "react";
 import type { User } from "@/types";
 
+// Define the shape of the authentication context
 interface AuthContextType {
   user: User | null;
-  login: (user: User, token: string) => void;
+  login: (userData: User, token: string) => void;
   logout: () => void;
 }
 
+// Create the context with initial undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// AuthProvider component that wraps your application
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
+  // Initialize user state from localStorage at mount
+  const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (err) {
-        console.error("Failed to parse user data", err);
-        localStorage.removeItem("user");
-      }
+    try {
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      console.error("Failed to parse stored user data", error);
+      localStorage.removeItem("user");
+      return null;
     }
-  }, []);
+  });
 
+  // Login function — sets localStorage and updates state
   const login = (userData: User, token: string) => {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
   };
 
+  // Logout function — clears localStorage and resets state
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -45,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Custom hook to use the AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
