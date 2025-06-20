@@ -24,6 +24,14 @@ const UserProfilePage: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // ⛳ Redirect if user is not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate("/");
+    }
+  }, [user, navigate]);
+
+  // ✅ Fetch user's rooms
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -51,7 +59,7 @@ const UserProfilePage: React.FC = () => {
     navigate("/create-room");
   };
 
-  if (!user) return <div>Loading user...</div>;
+  if (!user) return null; // Prevent UI flicker on redirect
   if (loading) return <div>Loading your rooms...</div>;
 
   return (
@@ -61,6 +69,7 @@ const UserProfilePage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
+      {/* Heading */}
       <motion.h1
         className="text-3xl font-bold text-purple-700 mb-6 flex items-center gap-2"
         initial={{ opacity: 0, x: -20 }}
@@ -71,6 +80,7 @@ const UserProfilePage: React.FC = () => {
         Your Profile
       </motion.h1>
 
+      {/* User Info */}
       <motion.div
         className="space-y-2 mb-8"
         initial="hidden"
@@ -88,12 +98,14 @@ const UserProfilePage: React.FC = () => {
         </motion.p>
       </motion.div>
 
+      {/* Room Section */}
       <motion.div
         className="bg-purple-50 p-4 rounded-lg border border-purple-200"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
+        {/* Info Text */}
         <div className="flex items-center gap-2 mb-2 text-sm text-purple-700">
           <Info className="w-4 h-4" />
           <p>
@@ -107,6 +119,7 @@ const UserProfilePage: React.FC = () => {
           Your Created Rooms
         </h2>
 
+        {/* Room List or Empty State */}
         {rooms.length > 0 ? (
           <ul className="space-y-2">
             {rooms.map((room) => (
@@ -145,6 +158,7 @@ const UserProfilePage: React.FC = () => {
         )}
       </motion.div>
 
+      {/* Logout */}
       <motion.div
         className="mt-6 flex justify-end"
         initial={{ opacity: 0 }}
