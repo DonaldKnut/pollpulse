@@ -1,4 +1,3 @@
-// src/components/common/FormInput.tsx
 import { useState } from "react";
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -11,24 +10,36 @@ interface BaseFormInputProps {
   label: string;
   icon: LucideIcon;
   error?: string;
+  className?: string;
   as?: "input" | "textarea";
 }
 
-type FormInputProps = BaseFormInputProps &
-  (({ as?: "input" } & InputProps) | ({ as: "textarea" } & TextareaProps));
+type InputOnlyProps = BaseFormInputProps & {
+  as?: "input";
+  type?: InputProps["type"];
+} & Omit<InputProps, "type">;
+
+type TextareaOnlyProps = BaseFormInputProps & {
+  as: "textarea";
+} & TextareaProps;
+
+type FormInputProps = InputOnlyProps | TextareaOnlyProps;
 
 const FormInput: React.FC<FormInputProps> = ({
   label,
   icon: Icon,
-  type,
   error,
   className = "",
   as = "input",
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const isPassword = type === "password";
-  const inputType = isPassword ? (showPassword ? "text" : "password") : type;
+
+  const isPassword =
+    as === "input" && "type" in props && props.type === "password";
+
+  const inputType =
+    isPassword && showPassword ? "text" : "type" in props ? props.type : "text";
 
   return (
     <div className="mb-5">
@@ -39,22 +50,24 @@ const FormInput: React.FC<FormInputProps> = ({
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Icon className="h-5 w-5 text-purple-400" />
         </div>
+
         {as === "textarea" ? (
           <textarea
+            {...(props as TextareaProps)}
             className={`w-full pl-10 pr-10 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${className} ${
               error ? "border-red-500" : ""
             }`}
-            {...(props as TextareaProps)}
           />
         ) : (
           <input
+            {...(props as InputProps)}
             type={inputType}
             className={`w-full pl-10 pr-10 py-3 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all ${className} ${
               error ? "border-red-500" : ""
             }`}
-            {...(props as InputProps)}
           />
         )}
+
         {isPassword && (
           <button
             type="button"

@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { register } from "../services/authService";
 import { UserPlus, Mail, Lock, ArrowRight, User } from "lucide-react";
 import FormInput from "@/components/common/FormInput";
+import { Notification } from "@/components/Notification";
 
 interface NotificationState {
   message: string;
@@ -18,8 +19,8 @@ const RegisterForm: React.FC = () => {
   const [notification, setNotification] = useState<NotificationState | null>(
     null
   );
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
   const passwordsMatch = password === confirmPassword || !confirmPassword;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,11 +34,10 @@ const RegisterForm: React.FC = () => {
       localStorage.setItem("user", JSON.stringify(user));
 
       setNotification({
-        message: `Account created successfully! Please login`,
+        message: "Account created successfully! Please login",
         type: "success",
       });
 
-      // Redirect to login page after 1.5 seconds
       setTimeout(() => navigate("/login"), 1500);
     } catch (err: any) {
       setNotification({
@@ -50,23 +50,31 @@ const RegisterForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md mx-auto mt-10">
       <div className="flex justify-center mb-6">
         <div className="w-24 h-24 bg-purple-600/10 rounded-full flex items-center justify-center">
           <UserPlus className="w-12 h-12 text-purple-600" strokeWidth={1.5} />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-purple-100">
+      <div className="bg-white rounded-2xl shadow-xl border border-purple-100">
         <div className="p-8">
           <h2 className="text-3xl font-bold text-center text-purple-800 mb-2">
             Create Account
           </h2>
-          <p className="text-center text-purple-600 mb-8">
+          <p className="text-center text-purple-600 mb-6">
             Join our voting community
           </p>
 
-          <form onSubmit={handleSubmit}>
+          {notification && (
+            <Notification
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <FormInput
               label="Username"
               icon={User}
@@ -154,7 +162,8 @@ const RegisterForm: React.FC = () => {
               to="/login"
               className="text-purple-600 hover:text-purple-800 font-medium transition-colors flex items-center justify-center gap-1"
             >
-              Already have an account? Login <ArrowRight className="w-4 h-4" />
+              Already have an account? Login
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
