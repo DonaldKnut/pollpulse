@@ -17,6 +17,10 @@ dist/
 build/
 coverage/
 
+# Ignore any accidental JS files in src
+/src/**/*.js
+
+
 # Logs
 logs/
 *.log
