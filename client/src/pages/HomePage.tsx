@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Vote, LogIn, UserPlus, User, LogOut } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth"; // Custom hook to check auth state
+import { useAuth } from "@/context/AuthContext";
 import { Notification } from "@/components/Notification";
 import { useState } from "react";
 

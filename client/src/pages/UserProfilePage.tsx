@@ -8,6 +8,7 @@ import {
   LogOut,
   Info,
   PlusCircle,
+  ClipboardCopy,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -23,15 +24,14 @@ const UserProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
 
-  // ⛳ Redirect if user is not authenticated
   useEffect(() => {
     if (!user) {
       navigate("/");
     }
   }, [user, navigate]);
 
-  // ✅ Fetch user's rooms
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -59,7 +59,14 @@ const UserProfilePage: React.FC = () => {
     navigate("/create-room");
   };
 
-  if (!user) return null; // Prevent UI flicker on redirect
+  const handleCopyLink = (roomId: string) => {
+    const link = `${window.location.origin}/room/${roomId}`;
+    navigator.clipboard.writeText(link);
+    setCopiedRoomId(roomId);
+    setTimeout(() => setCopiedRoomId(null), 2000);
+  };
+
+  if (!user) return null;
   if (loading) return <div>Loading your rooms...</div>;
 
   return (
@@ -69,7 +76,7 @@ const UserProfilePage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Heading */}
+      {/* Header */}
       <motion.h1
         className="text-3xl font-bold text-purple-700 mb-6 flex items-center gap-2"
         initial={{ opacity: 0, x: -20 }}
@@ -105,7 +112,6 @@ const UserProfilePage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
       >
-        {/* Info Text */}
         <div className="flex items-center gap-2 mb-2 text-sm text-purple-700">
           <Info className="w-4 h-4" />
           <p>
@@ -119,26 +125,48 @@ const UserProfilePage: React.FC = () => {
           Your Created Rooms
         </h2>
 
-        {/* Room List or Empty State */}
         {rooms.length > 0 ? (
           <ul className="space-y-2">
             {rooms.map((room) => (
               <li
                 key={room.id}
-                className="bg-white p-3 rounded-lg shadow-sm border flex justify-between items-center"
+                className="bg-white p-3 rounded-lg shadow-sm border"
               >
-                <div>
-                  <h3 className="font-medium text-purple-700">{room.title}</h3>
-                  <p className="text-sm text-purple-400">
-                    Created: {new Date(room.createdAt).toLocaleDateString()}
-                  </p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-medium text-purple-700">
+                      {room.title}
+                    </h3>
+                    <p className="text-sm text-purple-400">
+                      Created: {new Date(room.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => navigate(`/room/${room.id}`)}
-                  className="flex items-center gap-1 text-purple-600 hover:underline"
-                >
-                  View <ArrowRightCircle className="w-4 h-4" />
-                </button>
+
+                <div className="mt-3 flex gap-4 flex-wrap">
+                  <button
+                    onClick={() => handleCopyLink(room.id)}
+                    className="flex items-center gap-1 text-purple-600 text-sm hover:underline"
+                  >
+                    {copiedRoomId === room.id ? (
+                      <span className="text-green-600 font-medium">
+                        Copied!
+                      </span>
+                    ) : (
+                      <>
+                        <ClipboardCopy className="w-4 h-4" />
+                        Copy Link
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => navigate(`/room/${room.id}`)}
+                    className="flex items-center gap-1 text-purple-600 text-sm hover:underline"
+                  >
+                    View <ArrowRightCircle className="w-4 h-4" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -158,7 +186,7 @@ const UserProfilePage: React.FC = () => {
         )}
       </motion.div>
 
-      {/* Logout */}
+      {/* Logout Button */}
       <motion.div
         className="mt-6 flex justify-end"
         initial={{ opacity: 0 }}
