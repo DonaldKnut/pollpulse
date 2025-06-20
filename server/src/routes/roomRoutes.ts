@@ -7,9 +7,11 @@ import {
 } from "../controllers/roomController";
 import { protect } from "../middleware/authMiddleware";
 import { asyncHandler } from "../middleware/asyncHandler";
+import { getRoomsByUser } from "../controllers/roomController";
 
 const router = Router();
 
+router.get("/", asyncHandler(getRoomsByUser));
 router.post("/", asyncHandler(protect), asyncHandler(createRoom));
 router.get("/:id", asyncHandler(getRoom));
 router.post("/:id/vote", asyncHandler(voteRoom));

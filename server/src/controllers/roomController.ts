@@ -171,3 +171,28 @@ export const getResults = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getRoomsByUser = async (req: Request, res: Response) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ message: "Missing userId in query" });
+  }
+
+  try {
+    const rooms = await Room.find({ creator: userId }).sort({ createdAt: -1 });
+
+    const response = rooms.map((room) => ({
+      id: room.id.toString(),
+      title: room.title,
+      createdAt: room.createdAt.toISOString(),
+    }));
+
+    res.json({ rooms: response });
+  } catch (err: unknown) {
+    const error = err as Error;
+    res
+      .status(500)
+      .json({ message: "Failed to fetch rooms", error: error.message });
+  }
+};
