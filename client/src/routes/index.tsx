@@ -6,6 +6,7 @@ import CreateRoomPage from "../pages/CreateRoomPage";
 import RoomPage from "../pages/RoomPage";
 import ResultsPage from "../pages/ResultsPage";
 import Layout from "../components/layout/Layout";
+import UserProfileWrapper from "@/context/UserProfileWrapper";
 
 const router = createBrowserRouter([
   {
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       { path: "/register", element: <RegisterPage /> },
       { path: "/create-room", element: <CreateRoomPage /> },
       { path: "/room/:roomId", element: <RoomPage /> },
+      { path: "/profile", element: <UserProfileWrapper /> },
       { path: "/results/:roomId", element: <ResultsPage /> },
     ],
   },
