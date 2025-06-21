@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import api from "@/services/api";
 
 interface Room {
   id: string;
@@ -38,19 +39,14 @@ const UserProfilePage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`/api/rooms?userId=${user?.id}`);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const response = await api.get(`/rooms?userId=${user?.id}`);
+        const data = response.data;
 
-        const data = await response.json();
-
-        if (data.rooms) {
+        if (Array.isArray(data.rooms)) {
           setRooms(data.rooms);
         } else {
           setError("No rooms data received");
-          setRooms([]);
         }
       } catch (err) {
         console.error("Failed to fetch rooms", err);
@@ -91,18 +87,15 @@ const UserProfilePage: React.FC = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Header */}
       <motion.h1
         className="text-3xl font-bold text-purple-700 mb-6 flex items-center gap-2"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <User className="w-7 h-7 text-purple-500" />
-        Your Profile
+        <User className="w-7 h-7 text-purple-500" /> Your Profile
       </motion.h1>
 
-      {/* User Info */}
       <motion.div
         className="space-y-2 mb-8"
         initial="hidden"
@@ -120,7 +113,6 @@ const UserProfilePage: React.FC = () => {
         </motion.p>
       </motion.div>
 
-      {/* Room Section */}
       <motion.div
         className="bg-purple-50 p-4 rounded-lg border border-purple-200"
         initial={{ opacity: 0, y: 20 }}
@@ -136,8 +128,7 @@ const UserProfilePage: React.FC = () => {
         </div>
 
         <h2 className="text-lg font-semibold mb-3 text-purple-800 flex items-center gap-2 mt-4">
-          <ClipboardList className="w-5 h-5" />
-          Your Created Rooms
+          <ClipboardList className="w-5 h-5" /> Your Created Rooms
         </h2>
 
         {loading ? (
@@ -178,8 +169,7 @@ const UserProfilePage: React.FC = () => {
                       </span>
                     ) : (
                       <>
-                        <ClipboardCopy className="w-4 h-4" />
-                        Copy Link
+                        <ClipboardCopy className="w-4 h-4" /> Copy Link
                       </>
                     )}
                   </button>
@@ -203,14 +193,12 @@ const UserProfilePage: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               className="mt-2 inline-flex items-center gap-2 px-5 py-2 bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 transition"
             >
-              <PlusCircle className="w-5 h-5" />
-              Create Your First Room
+              <PlusCircle className="w-5 h-5" /> Create Your First Room
             </motion.button>
           </div>
         )}
       </motion.div>
 
-      {/* Logout Button */}
       <motion.div
         className="mt-6 flex justify-end"
         initial={{ opacity: 0 }}
@@ -221,8 +209,7 @@ const UserProfilePage: React.FC = () => {
           onClick={handleLogout}
           className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow"
         >
-          <LogOut className="w-4 h-4" />
-          Logout
+          <LogOut className="w-4 h-4" /> Logout
         </button>
       </motion.div>
     </motion.div>

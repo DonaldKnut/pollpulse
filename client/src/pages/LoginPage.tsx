@@ -3,14 +3,24 @@ import { useNavigate, Link } from "react-router-dom";
 import { login } from "../services/authService";
 import { LogIn, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import { Notification } from "@/components/Notification";
+import { useAuth } from "@/context/AuthContext";
+
+interface LoginData {
+  email: string;
+  password: string;
+}
+
+interface UserData {
+  id: string;
+  username: string;
+  email: string;
+}
 
 interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-  };
+  success: boolean;
+  accessToken: string;
+  user: UserData;
+  message?: string;
 }
 
 const LoginPage: React.FC = () => {
@@ -23,28 +33,62 @@ const LoginPage: React.FC = () => {
     type: "success" | "error";
   } | null>(null);
   const navigate = useNavigate();
+  const { login: authLogin } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setIsLoading(true);
 
     try {
-      const { token, user } = (await login({
-        email,
-        password,
-      })) as AuthResponse;
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      const loginData: LoginData = { email, password };
+      const response = await login(loginData);
+
+      // Verify the response structure matches our interface
+      if (
+        !response ||
+        typeof response !== "object" ||
+        !("accessToken" in response) ||
+        !("user" in response)
+      ) {
+        throw new Error("Invalid server response structure");
+      }
+
+      // Explicitly type the response to ensure type safety
+      const authResponse = response as AuthResponse;
+
+      if (
+        !authResponse.success ||
+        !authResponse.accessToken ||
+        !authResponse.user
+      ) {
+        throw new Error(authResponse.message || "Authentication failed");
+      }
+
+      authLogin(authResponse.user, authResponse.accessToken);
 
       setNotification({
-        message: `Welcome back, ${user.username}!`,
+        message: `Welcome back, ${authResponse.user.username}!`,
         type: "success",
       });
 
       setTimeout(() => navigate("/"), 1500);
-    } catch (err: any) {
+    } catch (error: unknown) {
+      let errorMessage = "Invalid credentials";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error
+      ) {
+        const axiosError = error as {
+          response?: { data?: { message?: string } };
+        };
+        errorMessage = axiosError.response?.data?.message || errorMessage;
+      }
+
       setNotification({
-        message: err.response?.data?.message || "Invalid credentials",
+        message: errorMessage,
         type: "error",
       });
     } finally {
@@ -58,7 +102,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-purple-100 p-4 relative">
-      {/* Notification */}
       {notification && (
         <Notification
           message={notification.message}

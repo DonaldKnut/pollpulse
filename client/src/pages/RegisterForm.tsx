@@ -29,8 +29,12 @@ const RegisterForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const { token, user } = await register({ username, email, password });
-      localStorage.setItem("token", token);
+      const { accessToken, user } = await register({
+        username,
+        email,
+        password,
+      });
+      localStorage.setItem("token", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
       setNotification({

@@ -1,53 +1,144 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
 import type { User } from "@/types";
+import { verifyToken } from "@/services/authService";
+import api from "@/services/api";
 
-// Define the shape of the authentication context
 interface AuthContextType {
   user: User | null;
-  login: (userData: User, token: string) => void;
-  logout: () => void;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (userData: User, token: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
 }
 
-// Create the context with initial undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// AuthProvider component that wraps your application
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // Initialize user state from localStorage at mount
-  const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem("user");
-    try {
-      return storedUser ? JSON.parse(storedUser) : null;
-    } catch (error) {
-      console.error("Failed to parse stored user data", error);
-      localStorage.removeItem("user");
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Login function — sets localStorage and updates state
-  const login = (userData: User, token: string) => {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(userData));
-    setUser(userData);
-  };
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const accessToken = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("user");
 
-  // Logout function — clears localStorage and resets state
-  const logout = () => {
+        if (accessToken && storedUser) {
+          const isValid = await verifyToken(accessToken);
+
+          if (isValid) {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+            setIsAuthenticated(true);
+          } else {
+            await clearAuthData();
+          }
+        }
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+        await clearAuthData();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const clearAuthData = async (): Promise<void> => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("token_expiry");
     setUser(null);
+    setIsAuthenticated(false);
   };
 
+  const login = async (userData: User, accessToken: string): Promise<void> => {
+    try {
+      localStorage.setItem("token", accessToken);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      const tokenExpiry = Date.now() + 60 * 60 * 1000; // 1 hour
+      localStorage.setItem("token_expiry", tokenExpiry.toString());
+
+      setUser(userData);
+      setIsAuthenticated(true);
+    } catch (error) {
+      console.error("Login error:", error);
+      await clearAuthData();
+      throw error;
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      await clearAuthData();
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error;
+    }
+  };
+
+  const refreshAuth = async (): Promise<void> => {
+    try {
+      const response = await api.post("/auth/refresh");
+      const newAccessToken = response.data.accessToken;
+
+      if (!newAccessToken) {
+        throw new Error("No new access token returned");
+      }
+
+      localStorage.setItem("token", newAccessToken);
+
+      const newExpiry = Date.now() + 60 * 60 * 1000;
+      localStorage.setItem("token_expiry", newExpiry.toString());
+    } catch (error) {
+      console.error("Token refresh error:", error);
+      await clearAuthData();
+    }
+  };
+
+  useEffect(() => {
+    const checkTokenExpiry = () => {
+      const expiry = localStorage.getItem("token_expiry");
+      if (expiry && Date.now() > parseInt(expiry)) {
+        clearAuthData();
+      }
+    };
+
+    const interval = setInterval(() => {
+      checkTokenExpiry();
+      refreshAuth(); // Automatically refresh token every 10 minutes
+    }, 10 * 60 * 1000); // 10 minutes
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isLoading,
+        login,
+        logout,
+        refreshAuth,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the AuthContext
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
