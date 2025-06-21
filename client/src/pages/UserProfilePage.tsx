@@ -25,6 +25,7 @@ const UserProfilePage: React.FC = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedRoomId, setCopiedRoomId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -35,11 +36,26 @@ const UserProfilePage: React.FC = () => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const res = await fetch(`/api/rooms?userId=${user?.id}`);
-        const data = await res.json();
-        setRooms(data.rooms);
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`/api/rooms?userId=${user?.id}`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.rooms) {
+          setRooms(data.rooms);
+        } else {
+          setError("No rooms data received");
+          setRooms([]);
+        }
       } catch (err) {
         console.error("Failed to fetch rooms", err);
+        setError("Failed to load rooms. Please try again.");
+        setRooms([]);
       } finally {
         setLoading(false);
       }
@@ -48,7 +64,7 @@ const UserProfilePage: React.FC = () => {
     if (user?.id) {
       fetchRooms();
     }
-  }, [user]);
+  }, [user?.id]);
 
   const handleLogout = () => {
     logout();
@@ -67,7 +83,6 @@ const UserProfilePage: React.FC = () => {
   };
 
   if (!user) return null;
-  if (loading) return <div>Loading your rooms...</div>;
 
   return (
     <motion.div
@@ -125,12 +140,21 @@ const UserProfilePage: React.FC = () => {
           Your Created Rooms
         </h2>
 
-        {rooms.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-purple-500"></div>
+          </div>
+        ) : error ? (
+          <div className="text-red-500 p-2 rounded bg-red-50">{error}</div>
+        ) : rooms.length > 0 ? (
           <ul className="space-y-2">
             {rooms.map((room) => (
-              <li
+              <motion.li
                 key={room.id}
                 className="bg-white p-3 rounded-lg shadow-sm border"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
                 <div className="flex justify-between items-center">
                   <div>
@@ -167,12 +191,12 @@ const UserProfilePage: React.FC = () => {
                     View <ArrowRightCircle className="w-4 h-4" />
                   </button>
                 </div>
-              </li>
+              </motion.li>
             ))}
           </ul>
         ) : (
           <div className="text-left text-purple-600 space-y-4">
-            <p>You haven’t created any rooms yet.</p>
+            <p>You haven't created any rooms yet.</p>
             <motion.button
               onClick={handleCreateRoom}
               whileHover={{ scale: 1.05 }}

@@ -1,7 +1,8 @@
+// src/components/forms/CreateRoomForm.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createRoom } from "@/services/roomService";
-import { Vote, Heading, AlignLeft, CalendarClock } from "lucide-react";
+import { Vote } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Notification } from "@/components/Notification";
 import FormInput from "@/components/common/FormInput";
@@ -17,20 +18,17 @@ const CreateRoomForm: React.FC = () => {
   const [notification, setNotification] = useState<NotificationState | null>(
     null
   );
-
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const handleOptionChange = (index: number, value: string) => {
-    const updatedOptions = [...options];
-    updatedOptions[index] = value;
-    setOptions(updatedOptions);
+    const newOptions = [...options];
+    newOptions[index] = value;
+    setOptions(newOptions);
   };
 
   const addOption = () => {
-    if (options.length < 5) {
-      setOptions([...options, ""]);
-    }
+    if (options.length < 5) setOptions([...options, ""]);
   };
 
   const removeOption = (index: number) => {
@@ -39,8 +37,8 @@ const CreateRoomForm: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
     if (!user) {
       setNotification({
@@ -55,7 +53,7 @@ const CreateRoomForm: React.FC = () => {
       const response = await createRoom({
         title,
         description,
-        options: options.filter((option) => option.trim() !== ""),
+        options: options.filter((opt) => opt.trim() !== ""),
         deadline,
       });
 
@@ -65,16 +63,12 @@ const CreateRoomForm: React.FC = () => {
       });
 
       setTimeout(() => navigate(`/room/${response._id || response.id}`), 1500);
-    } catch (error: unknown) {
+    } catch (err: unknown) {
       let errorMessage = "Failed to create room";
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error
-      ) {
-        const axiosError = error as {
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "object" && err !== null && "response" in err) {
+        const axiosError = err as {
           response?: { data?: { message?: string } };
         };
         errorMessage = axiosError.response?.data?.message || errorMessage;
@@ -117,23 +111,23 @@ const CreateRoomForm: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormInput
-          label="Room Title"
+          label="Title"
           type="text"
           value={title}
-          onChange={(event) => setTitle(event.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           required
           disabled={!user || isLoading}
-          icon={Heading}
+          icon={Vote}
         />
         <FormInput
-          label="Room Description"
+          label="Description"
           as="textarea"
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
           required
           rows={3}
           disabled={!user || isLoading}
-          icon={AlignLeft}
+          icon={Vote}
         />
         <OptionsList
           options={options}
@@ -143,13 +137,13 @@ const CreateRoomForm: React.FC = () => {
           disabled={!user || isLoading}
         />
         <FormInput
-          label="Voting Deadline"
+          label="Deadline"
           type="datetime-local"
           value={deadline}
-          onChange={(event) => setDeadline(event.target.value)}
+          onChange={(e) => setDeadline(e.target.value)}
           required
           disabled={!user || isLoading}
-          icon={CalendarClock}
+          icon={Vote}
         />
         <button
           type="submit"
